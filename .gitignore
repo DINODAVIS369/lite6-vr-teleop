@@ -1,0 +1,15 @@
+# ROS 2 Build folders
+install/
+build/
+log/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+
+# Local configs
+.vscode/
+.idea/
+
+# VR Scratch files
+scratch/
