@@ -147,12 +147,12 @@ class VRServoInput(Node):
         except Exception:
             wx, wy, wz = 0.0, 0.0, 0.0
 
-        # APPLY CLAMPING AND SMOOTHING
-        max_v = 0.5   # m/s
-        max_w = 1.0   # rad/s
-        alpha = 0.3   # smoothing factor (0.1 = very smooth, 1.0 = raw)
+        # MIRROR MODE: High Speed + Low Smoothing
+        max_v = 1.5   # m/s (Fast!)
+        max_w = 3.0   # rad/s (Rapid!)
+        alpha = 0.8   # responsive
 
-        # Clamp
+        # Clamp (Safety buffer only)
         vx = np.clip(vx, -max_v, max_v)
         vy = np.clip(vy, -max_v, max_v)
         vz = np.clip(vz, -max_v, max_v)

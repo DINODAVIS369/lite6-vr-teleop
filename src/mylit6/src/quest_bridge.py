@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Quest 3 Hand Tracking Bridge (Full 6-DOF Teleop)
-==============================================
-Maps both Position AND Orientation from Unity to ROS.
+Quest 3 Hand Tracking Bridge (Wrist Mode)
+========================================
+Tracks the Wrist for precise 1:1 mirroring.
 """
 
 import rclpy
@@ -10,7 +10,6 @@ from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 import socket
 import threading
-import math
 
 class QuestBridge(Node):
     def __init__(self):
@@ -18,14 +17,14 @@ class QuestBridge(Node):
         
         self.declare_parameter('port', 5005)
         self.declare_parameter('output_topic', '/vr/controller/right/pose')
-        self.declare_parameter('scale', 0.8)
+        self.declare_parameter('scale', 1.0)
         
         self.port = self.get_parameter('port').value
         self.output_topic = self.get_parameter('output_topic').value
         self.scale = self.get_parameter('scale').value
         
         self.publisher = self.create_publisher(PoseStamped, self.output_topic, 10)
-        self.get_logger().info('6-DOF MODE: Unlocking Orientation...')
+        self.get_logger().info('WRIST MODE: 1:1 Mirroring Active')
         
         self.running = True
         self.thread = threading.Thread(target=self._receive_loop)
@@ -46,6 +45,7 @@ class QuestBridge(Node):
                 
                 for line in lines:
                     clean_line = line.strip()
+                    
                     if clean_line.startswith('Right wrist:'):
                         parts = [p.strip() for p in clean_line.split(',')]
                         
@@ -55,30 +55,27 @@ class QuestBridge(Node):
                             msg.header.frame_id = 'link_base'
                             
                             try:
-                                # POSITION (Unity -> ROS FLU)
-                                ux = float(parts[1]) # Right
-                                uy = float(parts[2]) # Up
-                                uz = float(parts[3]) # Forward
+                                # UNITY -> ROS (1:1)
+                                ux = float(parts[1])
+                                uy = float(parts[2])
+                                uz = float(parts[3])
                                 
-                                msg.pose.position.x = (uz + 2.5) * self.scale
+                                # POSITION MAPPING
+                                msg.pose.position.x = (uz + 2.8) * self.scale
                                 msg.pose.position.y = (-ux) * self.scale
-                                msg.pose.position.z = (uy - 0.7) * self.scale + 0.2
+                                msg.pose.position.z = (uy - 0.7) * self.scale + 0.3
                                 
-                                # ORIENTATION (Unity -> ROS FLU)
-                                # Unity: X-Right, Y-Up, Z-Forward
-                                # ROS:   X-Fwd,   Y-Left, Z-Up
-                                # Quaternion components need to be remapped
-                                qx = float(parts[4])
-                                qy = float(parts[5])
-                                qz = float(parts[6])
-                                qw = float(parts[7])
+                                # ORIENTATION MAPPING
+                                uqx = float(parts[4])
+                                uqy = float(parts[5])
+                                uqz = float(parts[6])
+                                uqw = float(parts[7])
                                 
-                                # Remap Unity (x,y,z,w) to ROS (x,y,z,w)
-                                # This is a heuristic based on the axis mapping above
-                                msg.pose.orientation.x = qz
-                                msg.pose.orientation.y = -qx
-                                msg.pose.orientation.z = qy
-                                msg.pose.orientation.w = qw
+                                # Remap Unity -> ROS
+                                msg.pose.orientation.x = uqz
+                                msg.pose.orientation.y = -uqx
+                                msg.pose.orientation.z = uqy
+                                msg.pose.orientation.w = uqw
                                 
                                 self.publisher.publish(msg)
                             except:

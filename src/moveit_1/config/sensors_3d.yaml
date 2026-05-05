@@ -1,0 +1,11 @@
+sensors:
+  - default_sensor
+default_sensor:
+  filtered_cloud_topic: /depth/filtered/pointcloud
+  max_range: 12.0
+  max_update_rate: 15.0
+  padding_offset: 0.0
+  padding_scale: 1.0
+  point_cloud_topic: /depth/pointcloud
+  point_subsample: 100
+  sensor_plugin: occupancy_map_monitor/PointCloudOctomapUpdater
